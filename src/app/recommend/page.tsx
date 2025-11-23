@@ -12,23 +12,43 @@ interface Stock {
   description: string | null;
   recommendation_reason: string | null;
   risk_level: string | null;
+  region: string | null;
 }
 
 export default function RecommendPage() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('전체');
 
   useEffect(() => {
     fetch('/api/stocks')
-      .then((res) => res.json())
-      .then((data) => setStocks(data))
-      .catch((err) => console.error('Failed to fetch stocks:', err));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch stocks');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // API 응답이 배열인지 확인
+        if (Array.isArray(data)) {
+          setStocks(data);
+        } else {
+          console.error('Invalid response format:', data);
+          setStocks([]);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch stocks:', err);
+        setStocks([]);
+      });
   }, []);
 
-  const filteredStocks = stocks.filter((stock) =>
-    stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    stock.code.includes(searchQuery)
-  );
+  const filteredStocks = stocks.filter((stock) => {
+    const matchesSearch = stock.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      stock.code.includes(searchQuery);
+    const matchesRegion = selectedRegion === '전체' || stock.region === selectedRegion;
+    return matchesSearch && matchesRegion;
+  });
 
   const getRiskColor = (risk: string | null) => {
     switch (risk) {
@@ -62,7 +82,7 @@ export default function RecommendPage() {
         </Link>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -72,6 +92,39 @@ export default function RecommendPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedRegion('전체')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedRegion === '전체'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            전체
+          </button>
+          <button
+            onClick={() => setSelectedRegion('국내')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedRegion === '국내'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            국내종목
+          </button>
+          <button
+            onClick={() => setSelectedRegion('해외')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              selectedRegion === '해외'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            해외종목
+          </button>
         </div>
       </div>
 
@@ -110,15 +163,6 @@ export default function RecommendPage() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="mt-8">
-        <Link
-          href="/recommend/inquiry"
-          className="text-blue-600 hover:text-blue-800 font-medium"
-        >
-          특정 종목에 대해 문의하기 →
-        </Link>
       </div>
     </div>
   );

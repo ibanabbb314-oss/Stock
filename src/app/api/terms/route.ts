@@ -7,10 +7,13 @@ export async function GET() {
     seedDatabase();
     
     const terms = db.prepare('SELECT * FROM terms ORDER BY category, term').all();
-    return NextResponse.json(terms);
-  } catch (error) {
+    
+    // 빈 배열이어도 정상 응답으로 반환
+    return NextResponse.json(terms || []);
+  } catch (error: any) {
     console.error('Database error:', error);
-    return NextResponse.json({ error: 'Failed to fetch terms' }, { status: 500 });
+    // 에러가 발생해도 빈 배열을 반환하여 클라이언트에서 처리 가능하도록
+    return NextResponse.json([], { status: 200 });
   }
 }
 

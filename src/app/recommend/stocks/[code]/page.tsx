@@ -20,18 +20,50 @@ export default function StockDetailPage() {
   const router = useRouter();
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   useEffect(() => {
     if (params.code) {
       fetch(`/api/stocks/${params.code}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch stock');
+          }
+          return res.json();
+        })
         .then((data) => {
-          setStock(data);
+          // 에러 응답이 아닌 경우에만 설정
+          if (data && !data.error) {
+            setStock(data);
+          } else {
+            setStock(null);
+          }
           setLoading(false);
         })
         .catch((err) => {
           console.error('Failed to fetch stock:', err);
+          setStock(null);
           setLoading(false);
+        });
+
+      // 관심 종목에 이미 추가되어 있는지 확인
+      fetch('/api/favorites')
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch favorites');
+          }
+          return res.json();
+        })
+        .then((favorites) => {
+          // API 응답이 배열인지 확인
+          if (Array.isArray(favorites)) {
+            const isInFavorites = favorites.some((fav: { code: string }) => fav.code === params.code);
+            setIsFavorite(isInFavorites);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to check favorites:', err);
         });
     }
   }, [params.code]);
@@ -46,6 +78,39 @@ export default function StockDetailPage() {
         return 'bg-red-100 text-red-700';
       default:
         return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const handleAddToFavorites = async () => {
+    if (!stock || isAdding) return;
+    
+    setIsAdding(true);
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: stock.code,
+          name: stock.name,
+        }),
+      });
+
+      if (response.ok) {
+        setIsFavorite(true);
+        alert('관심종목에 추가되었습니다!');
+      } else if (response.status === 409) {
+        alert('이미 관심종목에 추가된 종목입니다.');
+        setIsFavorite(true);
+      } else {
+        alert('관심종목 추가에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to add favorite:', error);
+      alert('관심종목 추가에 실패했습니다.');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -121,9 +186,17 @@ export default function StockDetailPage() {
       )}
 
       <div className="flex gap-4">
-        <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-          <Heart className="w-5 h-5" />
-          관심종목에 추가
+        <button
+          onClick={handleAddToFavorites}
+          disabled={isFavorite || isAdding}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
+            isFavorite
+              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          } ${isAdding ? 'opacity-50 cursor-not-allowed' : ''}`}
+        >
+          <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+          {isFavorite ? '이미 추가됨' : isAdding ? '추가 중...' : '관심종목에 추가'}
         </button>
         <Link
           href="/recommend"

@@ -18,9 +18,25 @@ export default function LearnPage() {
 
   useEffect(() => {
     fetch('/api/terms')
-      .then((res) => res.json())
-      .then((data) => setTerms(data))
-      .catch((err) => console.error('Failed to fetch terms:', err));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch terms');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // API 응답이 배열인지 확인
+        if (Array.isArray(data)) {
+          setTerms(data);
+        } else {
+          console.error('Invalid response format:', data);
+          setTerms([]);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch terms:', err);
+        setTerms([]);
+      });
   }, []);
 
   const categories = ['전체', ...Array.from(new Set(terms.map((t) => t.category)))];
@@ -94,24 +110,6 @@ export default function LearnPage() {
             {searchQuery ? '검색 결과가 없습니다.' : '용어를 불러오는 중...'}
           </div>
         )}
-      </div>
-
-      <div className="mt-12 grid md:grid-cols-2 gap-6">
-        <Link
-          href="/learn/faq"
-          className="p-6 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-lg transition-all"
-        >
-          <h3 className="text-xl font-semibold mb-2 text-gray-900">자주 묻는 질문</h3>
-          <p className="text-gray-800">초보자들이 자주 묻는 질문과 답변을 확인하세요.</p>
-        </Link>
-
-        <Link
-          href="/learn/lessons"
-          className="p-6 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-lg transition-all"
-        >
-          <h3 className="text-xl font-semibold mb-2 text-gray-900">초보자 강의</h3>
-          <p className="text-gray-800">주식 투자의 기초부터 차근차근 배워보세요.</p>
-        </Link>
       </div>
     </div>
   );

@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "trip-main",
+			"path": "../Downloads/trip-main"
+		},
+		{
+			"name": "ProjectAI",
+			"path": "../ProjectAI"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}

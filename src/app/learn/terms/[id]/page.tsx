@@ -23,13 +23,24 @@ export default function TermDetailPage() {
   useEffect(() => {
     if (params.id) {
       fetch(`/api/terms/${params.id}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch term');
+          }
+          return res.json();
+        })
         .then((data) => {
-          setTerm(data);
+          // 에러 응답이 아닌 경우에만 설정
+          if (data && !data.error) {
+            setTerm(data);
+          } else {
+            setTerm(null);
+          }
           setLoading(false);
         })
         .catch((err) => {
           console.error('Failed to fetch term:', err);
+          setTerm(null);
           setLoading(false);
         });
     }

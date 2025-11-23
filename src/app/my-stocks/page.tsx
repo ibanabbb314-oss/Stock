@@ -1,11 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, TrendingUp } from 'lucide-react';
 
+interface Favorite {
+  code: string;
+  name: string;
+  created_at: string;
+}
+
 export default function MyStocksPage() {
-  const [favorites] = useState<Array<{ code: string; name: string }>>([]);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/favorites')
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch favorites');
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // API 응답이 배열인지 확인
+        if (Array.isArray(data)) {
+          setFavorites(data);
+        } else {
+          console.error('Invalid response format:', data);
+          setFavorites([]);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch favorites:', err);
+        setFavorites([]);
+        setLoading(false);
+      });
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -19,7 +51,11 @@ export default function MyStocksPage() {
         </p>
       </div>
 
-      {favorites.length === 0 ? (
+      {loading ? (
+        <div className="bg-white border-2 border-gray-200 rounded-lg p-12 text-center">
+          <div className="text-gray-700">로딩 중...</div>
+        </div>
+      ) : favorites.length === 0 ? (
         <div className="bg-white border-2 border-gray-200 rounded-lg p-12 text-center">
           <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2 text-gray-900">아직 관심종목이 없습니다</h2>
@@ -39,7 +75,7 @@ export default function MyStocksPage() {
           {favorites.map((stock) => (
             <Link
               key={stock.code}
-              href={`/my-stocks/${stock.code}`}
+              href={`/recommend/stocks/${stock.code}`}
               className="p-6 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-lg transition-all"
             >
               <h3 className="text-xl font-semibold mb-2 text-gray-900">{stock.name}</h3>
