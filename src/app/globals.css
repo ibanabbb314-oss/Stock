@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 색상 대비 강화 - 밝은 배경에는 어두운 글자 */
+.text-gray-600 {
+  color: #374151 !important;
+}
+
+.text-gray-700 {
+  color: #1f2937 !important;
+}
+
+.text-gray-800 {
+  color: #1f2937 !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.text-gray-900 {
+  color: #111827 !important;
+}
+
+/* 배경 색상 */
+.bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.bg-blue-50 {
+  background-color: #eff6ff !important;
+}
+
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+/* 어두운 배경에는 밝은 글자 */
+.bg-blue-600 {
+  color: #ffffff !important;
+}
+
+.bg-blue-700 {
+  color: #ffffff !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
